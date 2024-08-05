@@ -1,0 +1,44 @@
+name: superchain-pipeline-test
+version: 1
+status: ACTIVE
+resource_size: s
+apiVersion: 3
+sources:
+  base.receipt_transactions:
+    dataset_name: base.receipt_transactions
+    version: 1.2.0
+    type: dataset
+    start_at: earliest
+  optimism.raw_transactions:
+    dataset_name: optimism.raw_transactions
+    version: 1.0.0
+    type: dataset
+    start_at: earliest
+  zora.raw_transactions:
+    dataset_name: zora.raw_transactions
+    version: 1.0.0
+    type: dataset
+    start_at: earliest
+transforms: {}
+sinks:
+  postgres_base.receipt_transactions_public_base_receipt_transactions:
+    type: postgres
+    table: base_receipt_transactions
+    schema: public
+    secret_name: POSTGRES_SECRET_CLZGLZV1Z0
+    description: 'Postgres sink for Dataset: base.receipt_transactions'
+    from: base.receipt_transactions
+  postgres_optimism.raw_transactions_public_optimism_raw_transactions:
+    type: postgres
+    table: optimism_raw_transactions
+    schema: public
+    secret_name: POSTGRES_SECRET_CLZGLZV1Z0
+    description: 'Postgres sink for Dataset: optimism.raw_transactions'
+    from: optimism.raw_transactions
+  postgres_zora.raw_transactions_public_zora_raw_transactions:
+    type: postgres
+    table: zora_raw_transactions
+    schema: public
+    secret_name: POSTGRES_SECRET_CLZGLZV1Z0
+    description: 'Postgres sink for Dataset: zora.raw_transactions'
+    from: zora.raw_transactions
