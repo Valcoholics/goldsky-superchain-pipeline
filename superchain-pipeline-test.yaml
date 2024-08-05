@@ -29,7 +29,7 @@ transforms:
           COUNT(*) AS transaction_count,
           COUNT(DISTINCT to_address) AS contracts_interacted,
           MIN(block_timestamp) AS first_transaction_time,
-          SUM(CASE WHEN to_address IN ('list_of_bridge_contract_addresses') THEN value ELSE 0 END) AS total_bridged
+          SUM(CASE WHEN to_address IN ('list_of_bridge_contract_addresses') THEN tx_value ELSE 0 END) AS total_bridged
         FROM
           raw_transactions
         GROUP BY
