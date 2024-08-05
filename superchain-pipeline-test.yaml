@@ -19,7 +19,54 @@ sources:
     version: 1.0.0
     type: dataset
     start_at: earliest
-transforms: {}
+
+transforms:
+  cumulative_transaction_count:
+    sql: >
+      SELECT
+        from_address AS wallet,
+        COUNT(*) AS transaction_count
+      FROM
+        raw_transactions
+      GROUP BY
+        from_address
+    primary_key: wallet
+
+  contracts_interacted_with:
+    sql: >
+      SELECT
+        from_address AS wallet,
+        COUNT(DISTINCT to_address) AS contracts_interacted
+      FROM
+        raw_transactions
+      GROUP BY
+        from_address
+    primary_key: wallet
+
+  wallet_age:
+    sql: >
+      SELECT
+        from_address AS wallet,
+        MIN(block_timestamp) AS first_transaction_time
+      FROM
+        raw_transactions
+      GROUP BY
+        from_address
+    primary_key: wallet
+
+  total_bridged_amount:
+    sql: >
+      SELECT
+        from_address AS wallet,
+        SUM(value) AS total_bridged
+      FROM
+        raw_transactions
+      WHERE
+        to_address IN ('list_of_bridge_contract_addresses')
+      GROUP BY
+        from_address
+    primary_key: wallet
+
 sinks:
   postgres_base.receipt_transactions_public_base_receipt_transactions:
     type: postgres
