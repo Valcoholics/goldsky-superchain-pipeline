@@ -21,53 +21,42 @@ sources:
     start_at: earliest
 
 transforms:
-  cumulative_transaction_count:
+  wallet_activity_summary:
     sql: >
+      WITH wallet_data AS (
+        SELECT
+          from_address AS wallet,
+          COUNT(*) AS transaction_count,
+          COUNT(DISTINCT to_address) AS contracts_interacted,
+          MIN(block_timestamp) AS first_transaction_time,
+          SUM(CASE WHEN to_address IN ('list_of_bridge_contract_addresses') THEN value ELSE 0 END) AS total_bridged
+        FROM
+          raw_transactions
+        GROUP BY
+          from_address
+      )
       SELECT
-        from_address AS wallet,
-        COUNT(*) AS transaction_count
+        wd.wallet AS wallet_address,
+        ens.name AS ens_name,
+        wd.transaction_count,
+        wd.contracts_interacted,
+        wd.first_transaction_time,
+        wd.total_bridged
       FROM
-        raw_transactions
-      GROUP BY
-        from_address
-    primary_key: wallet
-
-  contracts_interacted_with:
-    sql: >
-      SELECT
-        from_address AS wallet,
-        COUNT(DISTINCT to_address) AS contracts_interacted
-      FROM
-        raw_transactions
-      GROUP BY
-        from_address
-    primary_key: wallet
-
-  wallet_age:
-    sql: >
-      SELECT
-        from_address AS wallet,
-        MIN(block_timestamp) AS first_transaction_time
-      FROM
-        raw_transactions
-      GROUP BY
-        from_address
-    primary_key: wallet
-
-  total_bridged_amount:
-    sql: >
-      SELECT
-        from_address AS wallet,
-        SUM(value) AS total_bridged
-      FROM
-        raw_transactions
-      WHERE
-        to_address IN ('list_of_bridge_contract_addresses')
-      GROUP BY
-        from_address
-    primary_key: wallet
+        wallet_data wd
+      LEFT JOIN ens ON ens.address = wd.wallet
+      ORDER BY wd.transaction_count DESC
+      LIMIT 300
+    primary_key: wallet_address
 
 sinks:
+  postgres_wallet_activity_summary:
+    type: postgres
+    table: wallet_activity_summary
+    schema: public
+    secret_name: POSTGRES_SECRET_CLZGLZV1Z0
+    description: 'Postgres sink for wallet activity summary'
+    from: wallet_activity_summary
   postgres_base.receipt_transactions_public_base_receipt_transactions:
     type: postgres
     table: base_receipt_transactions
